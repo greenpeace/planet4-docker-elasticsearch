@@ -1,3 +1,3 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+FROM docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
 
-RUN bin/elasticsearch-plugin install https://github.com/spinscale/elasticsearch-ingest-langdetect/releases/download/8.5.0.1/ingest-langdetect-8.5.0.1.zip
+RUN bin/elasticsearch-plugin install --batch ingest-attachment
