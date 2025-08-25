@@ -66,7 +66,7 @@ endif
 prepare: Dockerfile
 
 Dockerfile:
-	envsubst '$${BASE_NAMESPACE},$${BASE_IMAGE},$${BASE_TAG}' \
+	envsubst '$${BASE_IMAGE},$${BASE_TAG}' \
 		< Dockerfile.in > Dockerfile
 
 build:
@@ -74,6 +74,7 @@ ifndef DOCKER
 $(error "docker is not installed: https://docs.docker.com/install/")
 endif
 	docker build \
+	  --tag=$(BUILD_IMAGE):$(BASE_TAG) \
 		--tag=$(BUILD_IMAGE):$(BUILD_TAG) \
 		--tag=$(BUILD_IMAGE):build-$(BUILD_NUM) \
 		--tag=$(BUILD_IMAGE):$(REVISION_TAG) \
@@ -82,6 +83,7 @@ endif
 push: push-tag push-latest
 
 push-tag:
+	docker push $(BUILD_IMAGE):$(BASE_TAG)
 	docker push $(BUILD_IMAGE):$(BUILD_TAG)
 	docker push $(BUILD_IMAGE):build-$(BUILD_NUM)
 
