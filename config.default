@@ -1,0 +1,13 @@
+# =============================================================================
+
+# Application environment
+GOOGLE_PROJECT_ID=planet-4-151612
+
+# Upstream image
+BASE_IMAGE=elasticsearch-oss
+BASE_NAMESPACE=docker.elastic.co/elasticsearch
+BASE_TAG=6.3.1
+
+# Build image
+BUILD_NAMESPACE=greenpeaceinternational
+IMAGE_NAME=elasticsearch

@@ -1,0 +1,97 @@
+---
+version: 2.1
+
+docker_auth: &docker_auth
+  username: $DOCKERHUB_USERNAME
+  password: $DOCKERHUB_PASSWORD
+
+defaults: &defaults
+  docker:
+    - image: greenpeaceinternational/p4-builder:latest
+      auth:
+        <<: *docker_auth
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: configure
+          command: |
+            mkdir -p /tmp/workspace/var
+            echo "${CIRCLE_BUILD_NUM}" > /tmp/workspace/var/circle-build-num
+      - run:
+          name: prepare
+          command: make prepare
+      - run:
+          name: lint
+          command: make lint
+      - run:
+          name: build
+          command: make build
+      - run:
+          name: dockerhub login
+          command: docker-login.sh
+      - run:
+          name: push
+          command: make -j2 push
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - var
+
+  tag:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: prepare git
+          command: |
+            git config user.email "${GIT_USER_EMAIL}"
+            git config user.name "CircleCI Bot"
+            git config merge.ours.driver true
+      - run:
+          name: tag
+          command: |
+            current_version=$(git-current-tag.sh)
+            new_version=$(increment-version.sh $current_version)
+            echo "Tagging to ${new_version}"
+            git tag -a "$new_version" -m "$new_version"
+            git push origin --tags
+
+workflows:
+  branch:
+    jobs:
+      - build:
+          context: org-global
+      - hold-promote:
+          type: approval
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
+      - tag:
+          context: org-global
+          requires:
+            - hold-promote
+          filters:
+            branches:
+              only: main
+
+  tag:
+    jobs:
+      - build:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
