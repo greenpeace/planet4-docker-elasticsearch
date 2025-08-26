@@ -43,55 +43,8 @@ jobs:
           paths:
             - var
 
-  tag:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: prepare git
-          command: |
-            git config user.email "${GIT_USER_EMAIL}"
-            git config user.name "CircleCI Bot"
-            git config merge.ours.driver true
-      - run:
-          name: tag
-          command: |
-            current_version=$(git-current-tag.sh)
-            new_version=$(increment-version.sh $current_version)
-            echo "Tagging to ${new_version}"
-            git tag -a "$new_version" -m "$new_version"
-            git push origin --tags
-
 workflows:
   branch:
     jobs:
       - build:
           context: org-global
-      - hold-promote:
-          type: approval
-          requires:
-            - build
-          filters:
-            branches:
-              only: main
-      - tag:
-          context: org-global
-          requires:
-            - hold-promote
-          filters:
-            branches:
-              only: main
-
-  tag:
-    jobs:
-      - build:
-          context: org-global
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/

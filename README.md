@@ -12,3 +12,8 @@ Running `make` will build the images and run the tests.
 
 1. docker
 2. make
+
+### Image versions and tags
+
+- Creating a new branch will use the branch name to tag the docker image
+- Commiting on `main` branch will build an image using both the upstream image version and `latet`
